@@ -1,0 +1,12 @@
+## Interface: 11306
+## Version: 1
+## Title: |cFF323232RR|r|cFF7F7F7FInc|r |cFF6600CCAfra|r |cFF6B0B0BPower|r
+## Notes: Some addon.
+## Author: Pug
+## DefaultState: enabled
+## SavedVariables: rriapOptionHealOrder, rriapHealOrder, rriapOptionAnnounce, rriapOptionSkipDeadOffline, rriapOptionPrintHeals, rriapOptionAnnounceHealOrder
+## Dependencies: RRIncHealPrompt
+
+Libraries\Load_Libraries.xml
+optionsGUI.lua
+RRIncAfraPower.lua
