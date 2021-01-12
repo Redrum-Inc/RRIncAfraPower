@@ -57,13 +57,13 @@ myOptionsTable = {
         set = function(info,val) rriapOptionPrintHeals = val; end,
         get = function(info) return rriapOptionPrintHeals  end
     },
-     descriptionSpacer3 = {
+     descriptionSpacer4 = {
             name = "\n",
             order = 8,
             type = "description",
             fontSize = "medium"
     },
-    optionPrintHeals= {
+    optionAnnounceHealOrder= {
         name = "Announce heal order",
         desc = "Announce heal order to raid when starting.",
         order = 9,

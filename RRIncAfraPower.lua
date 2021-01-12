@@ -14,9 +14,17 @@ local function SendAddonMessageHandler(msg)
     end
 end
 
+local function AddHealHistory(text)
+	-- print(player, action, item)
+	local timestampformat="%y-%m-%d %H:%M:%S";
+	local timestamp = "20"..date(timestampformat);
+    table.insert(rriapHealHistory, "["..timestamp.."] "..text)
+end
+
 local function Reset()
     SendAddonMessageHandler("RESET")
     orderIndex = 0
+    monitorActive = false
 end
 
 local function PlayerIsInRaid(player)
@@ -124,21 +132,6 @@ local function IncomingMessage(...)
             print(messagePrefix, sourcePlayer,"has version:", versionWithStatus)            
             return
         end
-
-        if action == "HEAL" then
-            local action, sourcePlayer, targetPlayer, spell, amount, overkill = strsplit("_", messageText)
-            if rriapOptionPrintHeals then
-                print(messagePrefix, sourcePlayer, "cast", spell, "on", targetPlayer, "for", "|cFF449944"..amount.."|r", "(|cFF8F0000"..overkill.."|r)")
-            end
-            -- print(sourcePlayer, orderIndex, rriapHealOrder[orderIndex])
-            if sourcePlayer == rriapHealOrder[orderIndex] then
-                Next()
-            end
-        end
-
-        -- local playerName = select(6, GetPlayerInfoByGUID(UnitGUID("player")))
-
-        
     end
 end
 
@@ -151,8 +144,36 @@ function SlashCmdList.RRINCAFRA(msg)
         if ( not InterfaceOptionsFrame:IsShown() ) then
             InterfaceOptionsFrame:Show();
             InterfaceOptionsFrame_OpenToCategory("RRInc AfraPower");
-	    end
+        end
+        return
     end
+
+    if option == "history" and value == "clear" then
+        rriapHealHistory = {}
+        print(messagePrefix, "History cleared.")
+        return
+    end  
+
+    if option == "history" then        
+        if rriapHealHistory == nil then
+            print(messagePrefix, "No history recorded.")
+        else
+            local count = 0
+            for i = 1, #rriapHealHistory do			
+            	count = count + 1
+            end
+            
+            if count >= 1 then
+                print(messagePrefix, "- Heal History -")
+                for i = 1, #rriapHealHistory do			
+                    print(rriapHealHistory[i])
+                end
+            else
+                print(messagePrefix, "No history recorded.")
+            end
+        end        
+        return
+    end      
 end
 
 SLASH_RRINCLOATHEB1 = '/loatheb'
@@ -164,8 +185,9 @@ function SlashCmdList.RRINCLOATHEB(msg)
     
     if option == "" or option == "start" then
         Reset()
+        monitorActive = true
         -- Add check/warning if assigned player is not in raid or offline.
-        SendAddonMessageHandler("START")
+        -- SendAddonMessageHandler("START")
 
         local orderString = ""
         for i=1, #rriapHealOrder do
@@ -227,18 +249,28 @@ local RRIncAfraPower_IncomingMessage = CreateFrame("Frame")
 RRIncAfraPower_IncomingMessage:RegisterEvent("CHAT_MSG_ADDON")
 RRIncAfraPower_IncomingMessage:SetScript("OnEvent", IncomingMessage)
 
--- -- Event for Combat log
--- local RRIncAfraPower_CombatlogFrame = CreateFrame("Frame")
--- RRIncAfraPower_CombatlogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
--- RRIncAfraPower_CombatlogFrame:SetScript("OnEvent", function(self, event, ...)
--- 	local timestamp, type, hideCaster, sourceGUID, sourceName, sourceFlags, sourceFlags2, destGUID, destName, destFlags, destFlags2 = CombatLogGetCurrentEventInfo()
+-- Event for Combat log
+local RRIncAfraPower_CombatlogFrame = CreateFrame("Frame")
+RRIncAfraPower_CombatlogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+RRIncAfraPower_CombatlogFrame:SetScript("OnEvent", function(self, event, ...)
+	local timestamp, type, hideCaster, sourceGUID, sourceName, sourceFlags, sourceFlags2, destGUID, destName, destFlags, destFlags2, spellId, spellName, spellSchool, amount, overkill = CombatLogGetCurrentEventInfo()
+   
+    if not monitorActive then
+        return
+    end       
 
---     -- local playerName = select(6, GetPlayerInfoByGUID(UnitGUID(sourceGUID)))
-
--- 	--  print(type, sourceName, destName)
--- 	if type == "SPELL_HEAL" then
---         print(sourceName, type, destName)
---         StaticPopup_Hide("RRIncAfraPower")
---         SendAddonMessageHandler("ACTION_"..sourceName.."_HEALED_"..destName)
--- 	end
--- end)
+    if type == "SPELL_HEAL" then
+        -- print(sourceName, type, destName)
+        -- local playerName = select(6, GetPlayerInfoByGUID(UnitGUID("PLAYER")))
+        if rriapHealOrder[orderIndex] == sourceName then
+            if rriapOptionPrintHeals then
+                print(messagePrefix, sourceName, "cast", spellName, "on", destName, "for", "|cFF449944"..amount.."|r", "(|cFF8F0000"..overkill.."|r)")
+            end
+            AddHealHistory(sourceName.." cast "..spellName.." on "..destName.." for ".."|cFF449944"..amount.."|r".." (|cFF8F0000"..overkill.."|r)")
+            SendAddonMessageHandler("DONE_"..rriapHealOrder[orderIndex])
+            Next()
+            -- print(messagePrefix, type, sourceName, destName, spellName, "|cFF5CB85C"..amount.."|r", "|cFFE2252D"..overkill.."|r")
+        end
+	end   
+	
+end)
