@@ -1,5 +1,5 @@
 ## Interface: 11306
-## Version: 1
+## Version: 2
 ## Title: |cFF323232RR|r|cFF7F7F7FInc|r |cFF6600CCAfra|r |cFF6B0B0BPower|r
 ## Notes: By the power of Greyskull!
 ## Author: Pug
@@ -8,5 +8,5 @@
 ## Dependencies: RRIncHealPrompt
 
 Libraries\Load_Libraries.xml
-optionsGUI.lua
+RRIncAfraPower_Options.lua
 RRIncAfraPower.lua

@@ -3,16 +3,30 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 local test = false
 
-myOptionsTable = {
+local myOptionsTable = {
   type = "group",
   args = {
     optionHealOrder = {
         name = "Heal order",
-        desc = "List each player in order separated by comma.\nExample:\nSecretary,Pervink,Hagnuslegend",
+        desc = "List each player in order separated by comma, no spaces, case sensitive.\nExample:\nSecretary,Pervink,Hagnuslegend",
         order = 1,
         type = "input",
         multiline = true,
-        set = function(info,val) rriapOptionHealOrder = val; rriapHealOrder = {strsplit(",",val)}  end,
+        set = function(info,val) 
+            if #val >=1 then 
+                rriapOptionHealOrder = val; 
+            else 
+                rriapOptionHealOrder = "Dummy1,Dummy2" 
+            end 
+            if #{strsplit(",",rriapOptionHealOrder)} >=2 then
+                rriapHealOrder = {strsplit(",",rriapOptionHealOrder)} 
+            else
+                rriapOptionHealOrder = "Dummy1,Dummy2"
+                rriapHealOrder = {strsplit(",",rriapOptionHealOrder)} 
+            end            
+            
+            print(GetAddOnMetadata("RRIncAfraPower", "Title")..":","New heal order: "..rriapOptionHealOrder) 
+        end,
         get = function(info) return rriapOptionHealOrder  end
     },
     descriptionSpacer1 = {
@@ -71,13 +85,6 @@ myOptionsTable = {
         set = function(info,val) rriapOptionAnnounceHealOrder = val; end,
         get = function(info) return rriapOptionAnnounceHealOrder  end
     },
-    -- moreoptions={
-    --   name = "More Options",
-    --   type = "group",
-    --   args={
-    --     -- more options go here
-    --   }
-    -- }
   }
 }
 

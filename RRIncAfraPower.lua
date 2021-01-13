@@ -15,7 +15,9 @@ local function SendAddonMessageHandler(msg)
 end
 
 local function AddHealHistory(text)
-	-- print(player, action, item)
+    if rriapHealHistory == nil then
+        rriapHealHistory = {}
+    end
 	local timestampformat="%y-%m-%d %H:%M:%S";
 	local timestamp = "20"..date(timestampformat);
     table.insert(rriapHealHistory, "["..timestamp.."] "..text)
@@ -55,22 +57,30 @@ end
 
 local function Next()
     orderIndex = orderIndex + 1
-
-    local playerCount = 0
-    for i=1, #rriapHealOrder do
-        playerCount = playerCount + 1
-    end
-
-    -- If index is higher than players start over at 1.
-    if orderIndex > playerCount then
+    
+    -- If index is higher than player count, start over at 1.
+    if orderIndex > #rriapHealOrder then
         orderIndex = 1
     end
 
-    if rriapOptionSkipDeadOffline then
+    if rriapOptionSkipDeadOffline then 
         while not PlayerIsAvailable(rriapHealOrder[orderIndex]) do
+            local awolCount = 0
+            for i=1, #rriapHealOrder do
+                if not PlayerIsAvailable(rriapHealOrder[i]) then
+                    awolCount = awolCount + 1
+                end
+            end
+
+            if awolCount >= #rriapHealOrder then
+                print(messagePrefix, "No listed healers alive, online or in raid. Reset.")
+                Reset()
+                return
+            end
+
             print(messagePrefix,"#"..orderIndex, rriapHealOrder[orderIndex],"is dead, offline or not in raid, skipping.")
             orderIndex = orderIndex + 1
-            if orderIndex > playerCount then
+            if orderIndex > #rriapHealOrder then
                 orderIndex = 1
             end
         end
@@ -179,17 +189,24 @@ end
 SLASH_RRINCLOATHEB1 = '/loatheb'
 function SlashCmdList.RRINCLOATHEB(msg)
     local option, value = strsplit(" ",msg)	
-    -- if option == "" or option == nil then
-    --     return 
-    -- end
     
     if option == "" or option == "start" then
+
+        if rriapHealOrder == nil then
+            print(messagePrefix, "Enter a heal order in the Interface Options (can be opened with /rriap) before trying to start.")
+            return
+        else
+            if #rriapHealOrder < 2 then
+                print(messagePrefix, "Enter a heal order in the Interface Options (can be opened with /rriap) before trying to start.")
+                return
+            end
+        end
+
         Reset()
         monitorActive = true
-        -- Add check/warning if assigned player is not in raid or offline.
-        -- SendAddonMessageHandler("START")
 
         local orderString = ""
+        local notInRaidCount = 0
         for i=1, #rriapHealOrder do
             if i == 1 then
                 orderString = "#"..i.." "..rriapHealOrder[i]
@@ -198,26 +215,40 @@ function SlashCmdList.RRINCLOATHEB(msg)
             end
 
             if not PlayerIsInRaid(rriapHealOrder[i]) then
-                print(messagePrefix, "|cFFFF0000"..rriapHealOrder[i].." is not in the raid!|r Make sure your list is correct.")
+                print(messagePrefix, "|cFFFF0000"..rriapHealOrder[i].." is not in the raid!|r")
+                notInRaidCount = notInRaidCount + 1
             end
         end
 
-        print(messagePrefix, "Starting with heal order:", orderString)
+        -- Make sure that at least one listed healer is in the raid.
+        if notInRaidCount >= #rriapHealOrder then
+            print(messagePrefix, "|cFFFF0000No listed healers in the raid!|r Make sure your list is correct.")
+            return
+        end
+
+        print(messagePrefix, "Starting with heal order:", orderString:gsub(",",", "))
 
         if rriapOptionAnnounceHealOrder then
             SendChatMessage("Heal order: "..orderString,"RAID","COMMON")
         end
 
         Next()
+        AddHealHistory("START")
     end
 
     if(option == "next") then 
+        if not monitorActive then
+            print(messagePrefix, "Nothing running right now, start with /loatheb before using this.")
+            return
+        end
         SendAddonMessageHandler("SKIP_"..rriapHealOrder[orderIndex])
         Next()
     end
 
     if(option == "reset" or option == "stop") then
-        SendAddonMessageHandler("RESET")
+        SendAddonMessageHandler("RESET")        
+        AddHealHistory("RESET")
+        print(messagePrefix, "Reset.")
     end
 
     if(option == "display") then
@@ -225,7 +256,7 @@ function SlashCmdList.RRINCLOATHEB(msg)
     end
 
     if(option == "versioncheck" or option == "version") then
-        -- Post heal order to raid.
+        print(messagePrefix, "Performing versioncheck:")
         SendAddonMessageHandler("VERSIONCHECK")
     end
 end
@@ -255,9 +286,17 @@ RRIncAfraPower_CombatlogFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 RRIncAfraPower_CombatlogFrame:SetScript("OnEvent", function(self, event, ...)
 	local timestamp, type, hideCaster, sourceGUID, sourceName, sourceFlags, sourceFlags2, destGUID, destName, destFlags, destFlags2, spellId, spellName, spellSchool, amount, overkill = CombatLogGetCurrentEventInfo()
    
+    -- print(type, sourceName, destName)
+
     if not monitorActive then
         return
     end       
+
+    if type == "UNIT_DIED" and destName == "Loatheb" then
+        Reset()
+        print(messagePrefix,"Target dead, stopping.")
+        return
+    end
 
     if type == "SPELL_HEAL" then
         -- print(sourceName, type, destName)
