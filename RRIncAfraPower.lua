@@ -59,8 +59,14 @@ local function Next()
     orderIndex = orderIndex + 1
     
     -- If index is higher than player count, start over at 1.
-    if orderIndex > #rriapHealOrder then
-        orderIndex = 1
+    if orderIndex > #rriapHealOrder  then
+        if rriapOptionLoopOrder then
+            orderIndex = 1
+        else
+            Reset()
+            print(messagePrefix, "End of queue, reset.")
+            return
+        end
     end
 
     if rriapOptionSkipDeadOffline then 
@@ -81,7 +87,13 @@ local function Next()
             print(messagePrefix,"#"..orderIndex, rriapHealOrder[orderIndex],"is dead, offline or not in raid, skipping.")
             orderIndex = orderIndex + 1
             if orderIndex > #rriapHealOrder then
-                orderIndex = 1
+                if rriapOptionLoopOrder then
+                    orderIndex = 1
+                else
+                    Reset()
+                    print(messagePrefix, "End of queue, reset.")
+                    return
+                end
             end
         end
     end
@@ -89,9 +101,9 @@ local function Next()
     SendAddonMessageHandler("NEXT_"..rriapHealOrder[orderIndex])
     if rriapOptionAnnounce then
         if IsInRaid() then
-            SendChatMessage(rriapHealOrder[orderIndex].." healing next! "..orderIndex.." / "..playerCount,"RAID_WARNING","COMMON")
+            SendChatMessage(rriapHealOrder[orderIndex].." healing next! "..orderIndex.." / "..#rriapHealOrder,"RAID_WARNING","COMMON")
         else
-            print(rriapHealOrder[orderIndex].." healing next! "..orderIndex.." / "..playerCount)
+            print(rriapHealOrder[orderIndex].." healing next! "..orderIndex.." / "..#rriapHealOrder)
         end 
     end
 end
@@ -246,7 +258,7 @@ function SlashCmdList.RRINCLOATHEB(msg)
     end
 
     if(option == "reset" or option == "stop") then
-        SendAddonMessageHandler("RESET")        
+        Reset()      
         AddHealHistory("RESET")
         print(messagePrefix, "Reset.")
     end

@@ -1,10 +1,10 @@
 ## Interface: 11306
-## Version: 2
+## Version: 4
 ## Title: |cFF323232RR|r|cFF7F7F7FInc|r |cFF6600CCAfra|r |cFF6B0B0BPower|r
 ## Notes: By the power of Greyskull!
 ## Author: Pug
 ## DefaultState: enabled
-## SavedVariables: rriapOptionHealOrder, rriapHealOrder, rriapOptionAnnounce, rriapOptionSkipDeadOffline, rriapOptionPrintHeals, rriapOptionAnnounceHealOrder, rriapHealHistory
+## SavedVariables: rriapOptionHealOrder, rriapHealOrder, rriapOptionAnnounce, rriapOptionSkipDeadOffline, rriapOptionPrintHeals, rriapOptionAnnounceHealOrder, rriapOptionLoopOrder, rriapHealHistory
 ## Dependencies: RRIncHealPrompt
 
 Libraries\Load_Libraries.xml

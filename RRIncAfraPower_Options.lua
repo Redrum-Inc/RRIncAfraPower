@@ -85,6 +85,20 @@ local myOptionsTable = {
         set = function(info,val) rriapOptionAnnounceHealOrder = val; end,
         get = function(info) return rriapOptionAnnounceHealOrder  end
     },
+     descriptionSpacer5 = {
+            name = "\n",
+            order = 10,
+            type = "description",
+            fontSize = "medium"
+    },
+    optionLoopHealOrder= {
+        name = "Loop heal order",
+        desc = "Will reset order to first position after last has healed and keep going.",
+        order = 11,
+        type = "toggle",
+        set = function(info,val) rriapOptionLoopOrder = val; end,
+        get = function(info) return rriapOptionLoopOrder  end
+    },
   }
 }
 
